@@ -1,0 +1,185 @@
+<html>
+<head>
+	<title>EnderMetrics Account</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+   <!-- Latest compiled and minified CSS -->
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+   <!-- Optional theme -->
+   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+   <!-- Latest compiled and minified JavaScript -->
+   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+	<script type="text/javascript" src="./assets/jquery.cookie.js"></script>
+
+   <!-- EnderMetrics SDK-->
+	<script type="text/javascript" src="../sdk/endermetrics.js"></script>
+	<script type="text/javascript" src="../sdk/terminal.js"></script>
+
+	<script type="text/javascript">
+		$(function(){
+	        em.debug=true;
+	        terminal.run = true;
+
+	        terminal.init();
+			terminal.comment('INIT ENDERMETRICS JS SDK');
+	        em.init('70d0ee1e7e64947d0aee2c3db7a44c0e'); //.com
+	        //em.init('7afdc6d7383a179975bc80aca7a8fbe7'); //.loc
+	         
+	        var params={};window.location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi,function(str,key,value){params[key] = value;});
+	        if(params.session_token != null && params.session_token != undefined && params.session_token != ''){
+				$('.step1, .step2').hide();
+				$('.step3 ul').append('<li><a href="./example_hanoi.html?session_token='+params.session_token+'">Hanoi</a></li>');
+				$('.step3').show();
+
+	        }else if(params.aid!=null && params.aid!=undefined&&params.aid!=''){
+	        	em.account.id=params.aid;
+	        	$('#aid').html(em.account.id);
+
+
+	        	$('.step1').hide();
+	        	$('.step2').show();
+	        }
+	        
+	        
+
+	        console.log(params.aid);
+
+	        $('#custom-id').keyup(function(event) {
+	        	$('#register-code').html('em.account.register(\''+$(this).val()+'\');');
+	         	$('#register-btn').attr("href", 'javascript:register(\''+$(this).val()+'\');');
+	        });
+
+	        $('#child-custom-id').keyup(function(event) {
+	        	$('#register-child-code').html('em.child.register(\''+$(this).val()+'\');');
+	         	$('#register-child-btn').attr("href", 'javascript:registerChild(\''+$(this).val()+'\');');
+	        });
+
+
+	    });
+
+		function register(custom_id){
+			em.account.register(custom_id,function(id, data){
+				terminal.logResponse('success', data);
+				console.log('2');
+				window.location.href="./example_account.html?aid="+id;
+			},
+			function(data){
+				terminal.logResponse('fail', data);
+			});
+			console.log('1');
+		}
+
+
+		function registerChild(custom_id){
+			em.child.register(custom_id, 'nick', '2015-12-01', 'male', function(id, data){
+				terminal.logResponse('success', data);
+				$('.step21').hide();
+			},
+			function(data){
+				terminal.logResponse('fail', data);
+			});
+		}
+
+
+		function loadChildList(){
+			em.child.getAll(function(data){
+				console.log(data);
+				terminal.logResponse('success',data);
+				$.each(data, function(index, val) {
+					$('.child-list .table').append('<tr><td>'+val.id+'</td><td><a class="btn btn-default" href="javascript:initSession(\''+val.id+'\');" role="button">PLAY </a></td></tr>');
+				});
+				$('.code-session').show();
+			},
+			function(data){
+				console.log(data);
+			});
+		}
+
+
+		function initSession(cid){
+			em.child.id=cid;
+			em.account.auth(function(data){
+				console.log(data);
+				window.location.href="./example_account.html?session_token="+data;
+			}),
+			function(data){
+				console.log(data);
+			};
+		}
+
+
+	</script>
+</head>
+<body>
+	<div class="container">
+      <div class="row">
+         <div class="col-sm-6">
+         	<!-- STEP 1: REGISTER ACCOUNT -->
+         	<div class="row step1 col-sm-12" >
+         		<h2>Step 1- Create Anonymus Parents/Teacher Account</h2>
+				<div class="row"> 
+					<form class="form-inline">
+						<div class="form-group col-sm-12">
+							<label for="custom-id" class="col-sm-3" >Custom ID: </label>
+							<input type="text" id="custom-id" class="form-control col-sm-9" placeholder="xxxxxxxx" />
+						</div>
+					</form>
+					<p>&nbsp;</p>
+					<p><pre id="register-code">em.account.register();</pre></p>
+					<p><a id="register-child-btn" class="btn btn-default" href="javascript:register();" role="button">Create </a></p>
+				</div>
+			</div>
+			<!-- STEP 2: REGISTER CHID -->
+			<div class="row step2 step21 col-sm-12" style="display:none">
+				<h2>Step 2- Register child to account</h2>
+				<div class="col-sm-12">
+					<div class="row">
+						<label for="child-custom-id">Child custom id:</label>
+						<input type="text" id="child-custom-id" class="form-control" placeholder="xxxxxxxx" />
+						<p>&nbsp;</p>
+						<p><pre id="register-child-code">em.child.register();</pre></p>
+						<p><a id="register-btn" class="btn btn-default" href="javascript:registerChild();" role="button">Register child </a></p>
+					</div>
+				</div> 
+			</div>
+
+			<div class="row step2 step22 col-sm-12" style="display:none">
+				<h2>Or- Load All Children</h2>
+				<p><pre>em.child.getAll();</pre></p>
+				<p><a id="loadchild-btn" class="btn btn-default" href="javascript:loadChildList();" role="button">Load Child list </a></p>
+				<p><div class="child-list">
+					<table class="table">
+					</table>
+					<pre class="code-session" style="display:none;">em.account.auth();</pre>
+				</div></p>
+
+			</div>
+
+			<div class="row step3 col-sm-12" style="display:none">
+				<ul>
+				</ul>
+			</div>
+			
+
+		</div>
+		<div class="col-sm-6">
+			<div class="row">
+				<p>&nbsp;</p>
+				<p><strong>Account ID(em.account.id): </strong><pre id="aid">UNDEFINED</pre></p>
+				<p><strong>Children: </strong><pre id="clist">UNDEFINED</pre></p>
+			</div>
+			<div class="row">
+				<h3>TERMINAL</h3>
+				<div class="terminal">
+            		<ul></ul>
+            	</div>
+            </div>
+         </div>
+      </div>
+   </div>
+
+</body>
+</html>
